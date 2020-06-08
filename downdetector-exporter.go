@@ -466,7 +466,7 @@ func getMetrics(companyIDs string, searchString string) {
 	for _, companySet := range metricsResponse {
 
 		if searchString != "" {
-			fmt.Printf("ID: %d - Name: %s, Slug: %s, Country: %s", companySet.LabelID, companySet.LabelName, companySet.LabelSlug, companySet.LabelCountryISO)
+			fmt.Printf("ID: %d - Name: %s, Slug: %s, Country: %s\n", companySet.LabelID, companySet.LabelName, companySet.LabelSlug, companySet.LabelCountryISO)
 		} else {
 			// convert string value (success, warning, danger) to int metrics
 			switch companySet.IgnoreStatus {
