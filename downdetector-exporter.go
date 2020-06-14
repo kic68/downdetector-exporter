@@ -582,7 +582,7 @@ func systemAlive(listenAddress string, metricsPath string) {
 	}
 
 	// Call the metrics URL...
-	_, err := http.Get(metricsURL)
+	res, err := http.Get(metricsURL)
 	if err == nil {
 		// ... and notify systemd that everything was ok
 		daemon.SdNotify(false, daemon.SdNotifyWatchdog)
@@ -590,4 +590,7 @@ func systemAlive(listenAddress string, metricsPath string) {
 		// ... do nothing if it was not ok, but log. Systemd will restart soon.
 		level.Warn(lg).Log("msg", fmt.Sprintf("liveness check failed: %s", err.Error()))
 	}
+	// Read all away or else we'll run out of sockets sooner or later
+	_, _ = ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
 }
