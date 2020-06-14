@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goccy/go-json"
 	"github.com/goccy/go-yaml"
 
 	"github.com/go-kit/kit/log"
