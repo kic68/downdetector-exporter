@@ -20,7 +20,7 @@ Incorrect Usage. flag: help requested
 
   GLOBAL OPTIONS:
      --company_ids value, -i value       comma separated list of company ids to monitor [$COMPANY_IDS]
-     --credentials_file value, -c value  file containing credentials for downdetector. Credentials file is in YAML format and contains two fields, userName and password. Alternatively give username and password, they win over credentials file. [$CREDENTIALS_FILE]
+     --credentials_file value, -c value  file containing credentials for downdetector. Credentials file is in YAML format and contains two fields, username and password. Alternatively give username and password, they win over credentials file. [$CREDENTIALS_FILE]
      --username value, -u value          username, wins over credentials file [$DD_USERNAME]
      --password value, -p value          password, wins over credentials file [$DD_PASSWORD]
      --listen_address value, -l value    [optional] address to listen on, either :port or address:port (default: ":9313") [$LISTEN_ADDRESS]
@@ -37,7 +37,7 @@ Either provide a credentials file using the --credentials_file parameter. The fi
 
 ```
 ---
-userName: adjshkajsdhakjsd
+username: adjshkajsdhakjsd
 password: djhfksjdfhksjfhksjdhf
 
 ```
