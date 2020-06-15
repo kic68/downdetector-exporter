@@ -68,7 +68,7 @@ func init() {
 
 // BasicAuth contains username and string after reading them in from Yaml file
 type BasicAuth struct {
-	UserName string `json:"userName"`
+	UserName string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -200,7 +200,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "credentials_file",
 				Aliases:     []string{"c"},
-				Usage:       "file containing credentials for downdetector. Credentials file is in YAML format and contains two fields, userName and password. Alternatively give username and password, they win over credentials file.",
+				Usage:       "file containing credentials for downdetector. Credentials file is in YAML format and contains two fields, username and password. Alternatively give username and password, they win over credentials file.",
 				Destination: &credentialsFile,
 				EnvVars:     []string{"CREDENTIALS_FILE"},
 			},
