@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 13,
-  "iteration": 1591616408094,
+  "iteration": 1592221206994,
   "links": [],
   "panels": [
     {
@@ -79,7 +79,7 @@
       "pluginVersion": "6.7.2",
       "targets": [
         {
-          "expr": "dd_NumStatus{id=~\"[[id]]\"}",
+          "expr": "avg(dd_NumStatus{id=~\"[[id]]\"}) by (name,countryiso)",
           "interval": "",
           "legendFormat": "{{ name }} {{ countryiso }}",
           "refId": "A"
@@ -156,13 +156,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "dd_BaselineCurrent{id=~\"[[id]]\"}",
+          "expr": "avg(dd_BaselineCurrent{id=~\"[[id]]\"}) by (name,countryiso)",
           "interval": "",
           "legendFormat": "Baseline {{ name }} {{countryiso}}",
           "refId": "A"
         },
         {
-          "expr": "dd_Stats60{id=~\"[[id]]\"}",
+          "expr": "avg(dd_Stats60{id=~\"[[id]]\"}) by (name,countryiso)",
           "interval": "",
           "legendFormat": "Stats60  {{ name }} {{countryiso}}",
           "refId": "B"
@@ -251,7 +251,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 2,
       "scopedVars": {
         "id": {
@@ -361,7 +361,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 2,
       "scopedVars": {
         "id": {
@@ -471,7 +471,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 2,
       "scopedVars": {
         "id": {
@@ -581,7 +581,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 2,
       "scopedVars": {
         "id": {
@@ -691,7 +691,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 2,
       "scopedVars": {
         "id": {
@@ -830,7 +830,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "dd_NumStatus{id=~\"[[id]]\"}",
+          "expr": "avg(dd_NumStatus{id=~\"[[id]]\"}) by (name,countryiso)",
           "interval": "",
           "legendFormat": "Baseline {{ name }} {{countryiso}}",
           "refId": "A"
@@ -922,7 +922,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 7,
       "scopedVars": {
         "id": {
@@ -1029,7 +1029,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 7,
       "scopedVars": {
         "id": {
@@ -1136,7 +1136,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 7,
       "scopedVars": {
         "id": {
@@ -1243,7 +1243,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 7,
       "scopedVars": {
         "id": {
@@ -1350,7 +1350,7 @@
       "renderer": "flot",
       "repeat": null,
       "repeatDirection": "h",
-      "repeatIteration": 1591616408094,
+      "repeatIteration": 1592221206994,
       "repeatPanelId": 7,
       "scopedVars": {
         "id": {
@@ -1452,7 +1452,7 @@
     ]
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-30d",
     "to": "now"
   },
   "timepicker": {
@@ -1475,5 +1475,5 @@
   "variables": {
     "list": []
   },
-  "version": 38
+  "version": 41
 }
