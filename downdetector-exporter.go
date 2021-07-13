@@ -18,7 +18,7 @@ import (
 	"github.com/go-kit/kit/log"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/prometheus/client_golang/prometheus"
