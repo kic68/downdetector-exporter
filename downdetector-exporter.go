@@ -355,8 +355,17 @@ func workHorse(companyIDs string, searchString string) {
 
 func getHTTPClient(proxyURLStr string) *http.Client {
 
-	var transport *http.Transport
-	transport = http.DefaultTransport.(*http.Transport).Clone()
+	var (
+		httpRequestsTotal = prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "client_api_requests_total",
+				Help: "Total number of client requests made.",
+			},
+			[]string{"method", "code"},
+		)
+	)
+	prometheus.MustRegister(httpRequestsTotal)
+	transport := http.DefaultTransport.(*http.Transport).Clone()
 	// tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	if proxyURLStr != "" {
@@ -368,9 +377,11 @@ func getHTTPClient(proxyURLStr string) *http.Client {
 		transport.Proxy = http.ProxyURL(proxyURL)
 	}
 
+	roundTripper := promhttp.InstrumentRoundTripperCounter(httpRequestsTotal, transport)
+
 	//adding the Transport object to the http Client
 	client := &http.Client{
-		Transport: transport,
+		Transport: roundTripper,
 		Timeout:   60 * time.Second,
 	}
 	return client
