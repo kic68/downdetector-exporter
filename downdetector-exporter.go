@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -355,8 +355,17 @@ func workHorse(companyIDs string, searchString string) {
 
 func getHTTPClient(proxyURLStr string) *http.Client {
 
-	var transport *http.Transport
-	transport = http.DefaultTransport.(*http.Transport).Clone()
+	var (
+		httpRequestsTotal = prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "client_api_requests_total",
+				Help: "Total number of client requests made.",
+			},
+			[]string{"method", "code"},
+		)
+	)
+	prometheus.MustRegister(httpRequestsTotal)
+	transport := http.DefaultTransport.(*http.Transport).Clone()
 	// tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	if proxyURLStr != "" {
@@ -368,9 +377,11 @@ func getHTTPClient(proxyURLStr string) *http.Client {
 		transport.Proxy = http.ProxyURL(proxyURL)
 	}
 
+	roundTripper := promhttp.InstrumentRoundTripperCounter(httpRequestsTotal, transport)
+
 	//adding the Transport object to the http Client
 	client := &http.Client{
-		Transport: transport,
+		Transport: roundTripper,
 		Timeout:   60 * time.Second,
 	}
 	return client
@@ -391,14 +402,14 @@ func initToken() {
 	res, err := httpClient.Do(req)
 	if res.StatusCode != 200 {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		level.Warn(lg).Log("msg", fmt.Sprintf("Error response code: %d - %s", res.StatusCode, body))
 		return
 	}
 	defer res.Body.Close()
 
 	// read body from response
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
 		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't read in body: %s", err.Error()))
@@ -441,14 +452,14 @@ func getMetrics(companyIDs string, searchString string) {
 	res, err := httpClient.Do(req)
 	if res.StatusCode != 200 {
 		// return if we weren't successful
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		level.Warn(lg).Log("msg", fmt.Sprintf("Could not get metrics: %d - %s", res.StatusCode, body))
 		return
 	}
 	defer res.Body.Close()
 
 	// read body from response
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
 		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't read in body: %s", err.Error()))
@@ -591,6 +602,6 @@ func systemAlive(listenAddress string, metricsPath string) {
 		level.Warn(lg).Log("msg", fmt.Sprintf("liveness check failed: %s", err.Error()))
 	}
 	// Read all away or else we'll run out of sockets sooner or later
-	_, _ = ioutil.ReadAll(res.Body)
+	_, _ = io.ReadAll(res.Body)
 	defer res.Body.Close()
 }
