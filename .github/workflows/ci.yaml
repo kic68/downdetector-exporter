@@ -12,7 +12,7 @@ jobs:
       - name: 'Pull Code'
         uses: actions/checkout@main
       - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@main
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{github.actor}}
