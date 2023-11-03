@@ -19,5 +19,5 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN}}        
       - name: 'Build Inventory Image'
         run: |
-          docker build . --tag ghcr.io/nohn/downdetector-exporter:latest
-          docker push ghcr.io/nohn/downdetector-exporter:latest
+          docker build . --tag ghcr.io/${{GITHUB_REPOSITORY_OWNER}}/downdetector-exporter:latest
+          docker push ghcr.io/${{GITHUB_REPOSITORY_OWNER}}/downdetector-exporter:latest
