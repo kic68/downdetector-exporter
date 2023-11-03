@@ -134,19 +134,11 @@ Example of running in kubernetes:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    io.kompose.service: downdetector-exporter
   name: downdetector-exporter
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      io.kompose.service: downdetector-exporter
   strategy: {}
   template:
-    metadata:
-      labels:
-        io.kompose.service: downdetector-exporter
     spec:
       containers:
         - env:
