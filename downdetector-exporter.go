@@ -37,7 +37,7 @@ var (
 	lg = kitlog.NewLogfmtLogger(os.Stdout)
 
 	// fields for metrics request. If expanded, struct CompanySet needs to be expanded accordingly
-	fieldsToReturn       = []string{"id", "name", "slug", "baseline_current", "country_iso", "stats_60", "status"}
+	fieldsToReturn       = []string{"id", "name", "slug", "baseline_current", "country_iso", "stats_24", "stats_60", "status"}
 	fieldsToReturnSearch = []string{"id", "name", "slug", "country_iso"}
 
 	token       Token
@@ -99,6 +99,10 @@ type CompanySet struct {
 	BaselineCurrent int `json:"baseline_current"`
 	// Stats60 is the current metrics of mentions
 	Stats60 int `json:"stats_60"`
+	// IgnoreStats24 is the statistics over the last 24h in 15 minute buckets.
+	IgnoreStats24 []int `json:"stats_24"`
+	// Stats15 FIXME
+	Stats15 int `json:"-"`
 	// NumStatus needs to be filled in programmatically from IgnoreStatus value so it can be used as metric
 	NumStatus int `json:"-"`
 }
@@ -490,6 +494,9 @@ func getMetrics(companyIDs string, searchString string) {
 			default:
 				companySet.NumStatus = -1
 			}
+			companySet.Stats15 = companySet.IgnoreStats24[len(companySet.IgnoreStats24)-1]
+
+			// get last value from Stats24 array
 
 			// Debugging output
 			level.Debug(lg).Log("msg", fmt.Sprintf(""))
@@ -503,6 +510,7 @@ func getMetrics(companyIDs string, searchString string) {
 			level.Debug(lg).Log("msg", fmt.Sprintf("===== Metrics ====="))
 			level.Debug(lg).Log("msg", fmt.Sprintf("Current Baseline: %d", companySet.BaselineCurrent))
 			level.Debug(lg).Log("msg", fmt.Sprintf("Stats60:          %d", companySet.Stats60))
+			level.Debug(lg).Log("msg", fmt.Sprintf("Stats15:          %d", companySet.Stats15))
 			level.Debug(lg).Log("msg", fmt.Sprintf("Status:           %d", companySet.NumStatus))
 
 			// create empty array to hold labels
