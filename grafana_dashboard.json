@@ -159,6 +159,12 @@
           "interval": "",
           "legendFormat": "Stats60  {{ name }} {{countryiso}}",
           "refId": "B"
+        },
+        {
+          "expr": "avg(dd_Stats15{id=~\"[[id]]\"}) by (name,countryiso)",
+          "interval": "",
+          "legendFormat": "Stats15  {{ name }} {{countryiso}}",
+          "refId": "C"
         }
       ],
       "thresholds": [],
