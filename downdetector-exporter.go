@@ -494,9 +494,8 @@ func getMetrics(companyIDs string, searchString string) {
 			default:
 				companySet.NumStatus = -1
 			}
+			// get last value from Stats24 array			
 			companySet.Stats15 = companySet.IgnoreStats24[len(companySet.IgnoreStats24)-1]
-
-			// get last value from Stats24 array
 
 			// Debugging output
 			level.Debug(lg).Log("msg", fmt.Sprintf(""))
