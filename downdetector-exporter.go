@@ -101,7 +101,7 @@ type CompanySet struct {
 	Stats60 int `json:"stats_60"`
 	// IgnoreStats24 is the statistics over the last 24h in 15 minute buckets.
 	IgnoreStats24 []int `json:"stats_24"`
-	// Stats15 FIXME
+	// Stats15 is the number of reports over the last 15
 	Stats15 int `json:"-"`
 	// NumStatus needs to be filled in programmatically from IgnoreStatus value so it can be used as metric
 	NumStatus int `json:"-"`
