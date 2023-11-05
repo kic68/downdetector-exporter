@@ -110,6 +110,51 @@ METRICS_PATH
 LOG_LEVEL
 ```
 
+#### Running in Docker Compose
+
+Example of running in docker compose using some the above variables
+
+```
+services:
+  downdetector-exporter:
+    container_name: downdetector-exporter
+    image: ghcr.io/kic68/downdetector-exporter
+    restart: always
+    environment:
+      - COMPANY_IDS=23456,12345,34567
+      - DD_USERNAME=client-id
+      - DD_PASSWORD=secret-token
+```
+
+#### Running in Kubernetes
+
+Example of running in kubernetes:
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: downdetector-exporter
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    spec:
+      containers:
+        - env:
+            - name: COMPANY_IDS
+              value: "23456,12345,34567"
+            - name: DD_USERNAME
+              value: client-id
+            - name: DD_PASSWORD
+              value: secret-token
+          image: ghcr.io/kic68/downdetector-exporter
+          name: downdetector-exporter
+          resources: {}
+      restartPolicy: Always
+status: {}
+```
+
 ### Grafana dashboard
 
 There's a grafana_dashboard.json file in the repository which can be imported to Grafana.
