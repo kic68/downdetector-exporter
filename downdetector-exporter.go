@@ -404,6 +404,10 @@ func initToken() {
 	}
 	// send the token refresh request
 	res, err := httpClient.Do(req)
+	if err != nil {
+		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get token: %s", err.Error()))
+		return
+	}
 	if res.StatusCode != 200 {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
 		body, _ := io.ReadAll(res.Body)
@@ -454,6 +458,10 @@ func getMetrics(companyIDs string, searchString string) {
 	}
 	// send the metrics request
 	res, err := httpClient.Do(req)
+	if err != nil {
+		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get metrics: %s", err.Error()))
+		return
+	}
 	if res.StatusCode != 200 {
 		// return if we weren't successful
 		body, _ := io.ReadAll(res.Body)
@@ -494,7 +502,7 @@ func getMetrics(companyIDs string, searchString string) {
 			default:
 				companySet.NumStatus = -1
 			}
-			// get last value from Stats24 array			
+			// get last value from Stats24 array
 			companySet.Stats15 = companySet.IgnoreStats24[len(companySet.IgnoreStats24)-1]
 
 			// Debugging output
