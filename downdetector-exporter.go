@@ -154,30 +154,6 @@ func main() {
 	var companyIDs string
 	var searchString string
 
-	// Override template
-	cli.AppHelpTemplate = `
-	NAME:
-	   {{.Name}} - {{.Usage}}
-
-	USAGE:
-	   {{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
-	   {{if len .Authors}}
-	AUTHOR:
-	   {{range .Authors}}{{ . }}{{end}}
-	   {{end}}{{if .Commands}}
-	COMMANDS:
-	{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
-	GLOBAL OPTIONS:
-	   {{range .VisibleFlags}}{{.}}
-	   {{end}}{{end}}{{if .Copyright }}
-	COPYRIGHT:
-	   {{.Copyright}}
-	   {{end}}{{if .Version}}
-	VERSION:
-	   {{.Version}}
-	   {{end}}
-	`
-
 	// TODO: - value checking
 	// app is a command line parser
 	app := &cli.App{
@@ -188,7 +164,6 @@ func main() {
 			},
 		},
 		Commands:  nil,
-		HideHelp:  true,
 		ArgsUsage: " ",
 		Name:      "downdetector-exporter",
 		Usage:     "report metrics of downdetector api",
@@ -340,7 +315,9 @@ func main() {
 
 	// Start the app
 	err := app.Run(os.Args)
-	level.Error(lg).Log("msg", err.Error())
+	if err != nil {
+		level.Error(lg).Log("msg", err.Error())
+	}
 }
 
 func workHorse(companyIDs string, searchString string) {
