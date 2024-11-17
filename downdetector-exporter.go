@@ -15,9 +15,8 @@ import (
 
 	"github.com/goccy/go-yaml"
 
-	"github.com/go-kit/kit/log"
-	kitlog "github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/urfave/cli/v2"
 
 	"github.com/coreos/go-systemd/daemon"
@@ -34,7 +33,7 @@ const (
 )
 
 var (
-	lg = kitlog.NewLogfmtLogger(os.Stdout)
+	lg = log.NewLogfmtLogger(os.Stdout)
 
 	// fields for metrics request. If expanded, struct CompanySet needs to be expanded accordingly
 	fieldsToReturn       = []string{"id", "name", "slug", "baseline_current", "country_iso", "stats_24", "stats_60", "status"}
@@ -177,7 +176,7 @@ func main() {
 	VERSION:
 	   {{.Version}}
 	   {{end}}
-  `
+	`
 
 	// TODO: - value checking
 	// app is a command line parser
@@ -272,8 +271,8 @@ func main() {
 			}
 
 			// Debugging output
-			lg = kitlog.NewLogfmtLogger(os.Stdout)
-			lg = kitlog.With(lg, "ts", log.DefaultTimestamp, "caller", kitlog.DefaultCaller)
+			lg = log.NewLogfmtLogger(os.Stdout)
+			lg = log.With(lg, "ts", log.DefaultTimestamp, "caller", log.DefaultCaller)
 			switch logLevel {
 			case "DEBUG":
 				lg = level.NewFilter(lg, level.AllowDebug())
