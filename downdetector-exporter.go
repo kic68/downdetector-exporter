@@ -33,7 +33,9 @@ const (
 )
 
 var (
-	lg = log.NewLogfmtLogger(os.Stdout)
+	// version is set via ldflags during build
+	version = "dev"
+	lg      = log.NewLogfmtLogger(os.Stdout)
 
 	// fields for metrics request. If expanded, struct CompanySet needs to be expanded accordingly
 	fieldsToReturn       = []string{"id", "name", "slug", "baseline_current", "country_iso", "stats_24", "stats_60", "status"}
@@ -156,6 +158,12 @@ func main() {
 
 	// TODO: - value checking
 	// app is a command line parser
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "version",
+		Aliases: []string{"V"},
+		Usage:   "print version information and exit",
+	}
+
 	app := &cli.App{
 		Authors: []*cli.Author{
 			{
@@ -166,6 +174,7 @@ func main() {
 		Commands:  nil,
 		ArgsUsage: " ",
 		Name:      "downdetector-exporter",
+		Version:   version,
 		Usage:     "report metrics of downdetector api",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
