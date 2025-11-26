@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"os"
 	"reflect"
@@ -17,7 +19,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/prometheus/client_golang/prometheus"
@@ -182,14 +184,14 @@ func main() {
 				Aliases:     []string{"i"},
 				Usage:       "comma separated list of company ids to monitor",
 				Destination: &companyIDs,
-				EnvVars:     []string{"COMPANY_IDS"},
+				Sources:     cli.EnvVars("COMPANY_IDS"),
 			},
 			&cli.StringFlag{
 				Name:        "credentials_file",
 				Aliases:     []string{"c"},
 				Usage:       "file containing credentials for downdetector. Credentials file is in YAML format and contains two fields, username and password. Alternatively give username and password, they win over credentials file.",
 				Destination: &credentialsFile,
-				EnvVars:     []string{"CREDENTIALS_FILE"},
+				Sources:     cli.EnvVars("CREDENTIALS_FILE"),
 			},
 			&cli.StringFlag{
 				Name:        "username",
@@ -197,7 +199,7 @@ func main() {
 				Aliases:     []string{"u"},
 				Usage:       "username, wins over credentials file",
 				Destination: &username,
-				EnvVars:     []string{"DD_USERNAME"},
+				Sources:     cli.EnvVars("DD_USERNAME"),
 			},
 			&cli.StringFlag{
 				Name:        "password",
@@ -205,7 +207,7 @@ func main() {
 				Aliases:     []string{"p"},
 				Usage:       "password, wins over credentials file",
 				Destination: &password,
-				EnvVars:     []string{"DD_PASSWORD"},
+				Sources:     cli.EnvVars("DD_PASSWORD"),
 			},
 			&cli.StringFlag{
 				Name:        "listen_address",
@@ -213,7 +215,7 @@ func main() {
 				Aliases:     []string{"l"},
 				Usage:       "[optional] address to listen on, either :port or address:port",
 				Destination: &listenAddress,
-				EnvVars:     []string{"LISTEN_ADDRESS"},
+				Sources:     cli.EnvVars("LISTEN_ADDRESS"),
 			},
 			&cli.StringFlag{
 				Name:        "metrics_path",
@@ -221,7 +223,7 @@ func main() {
 				Aliases:     []string{"m"},
 				Usage:       "[optional] URL path where metrics are exposed",
 				Destination: &metricsPath,
-				EnvVars:     []string{"METRICS_PATH"},
+				Sources:     cli.EnvVars("METRICS_PATH"),
 			},
 			&cli.StringFlag{
 				Name:        "log_level",
@@ -229,7 +231,7 @@ func main() {
 				Aliases:     []string{"v"},
 				Usage:       "[optional] log level, choose from DEBUG, INFO, WARN, ERROR",
 				Destination: &logLevel,
-				EnvVars:     []string{"LOG_LEVEL"},
+				Sources:     cli.EnvVars("LOG_LEVEL"),
 			},
 			&cli.StringFlag{
 				Name:        "search_string",
@@ -239,7 +241,7 @@ func main() {
 				Destination: &searchString,
 			},
 		},
-		Action: func(c *cli.Context) error {
+		Action: func(context.Context, *cli.Command) error {
 
 			if credentialsFile == "" {
 				if username == "" || password == "" {
@@ -323,7 +325,7 @@ func main() {
 	}
 
 	// Start the app
-	err := app.Run(os.Args)
+	err := app.Run(context.Background(), os.Args)
 	if err != nil {
 		level.Error(lg).Log("msg", err.Error())
 	}
