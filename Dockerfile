@@ -6,7 +6,9 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY *.go ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o /downdetector-exporter
+
+ARG VERSION=dev
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.version=${VERSION}" -o /downdetector-exporter
 
 FROM gcr.io/distroless/base-debian13 AS build-release-stage
 
