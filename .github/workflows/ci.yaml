@@ -1,9 +1,11 @@
 name: CI
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   docker-build-push:
@@ -16,8 +18,9 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}        
-      - name: 'Build Inventory Image'
+          password: ${{github.token}}
+      - name: 'Build and Push Image'
         run: |
-          docker build . --tag ghcr.io/$GITHUB_REPOSITORY_OWNER/downdetector-exporter:latest
-          docker push ghcr.io/$GITHUB_REPOSITORY_OWNER/downdetector-exporter:latest
+          IMAGE_NAMESPACE=$(echo "$GITHUB_ACTOR" | tr '[:upper:]' '[:lower:]')
+          docker build . --tag ghcr.io/${IMAGE_NAMESPACE}/downdetector-exporter:latest
+          docker push ghcr.io/${IMAGE_NAMESPACE}/downdetector-exporter:latest
