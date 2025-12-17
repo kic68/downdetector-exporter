@@ -166,11 +166,11 @@ func main() {
 		Usage:   "print version information and exit",
 	}
 
-	app := &cli.App{
-		Authors: []*cli.Author{
-			{
-				Name:  "Torben Frey",
-				Email: "torben@torben.dev",
+	app := &cli.Command{
+		Authors: []any{
+			mail.Address{
+				Name:    "Torben Frey",
+				Address: "torben@torben.dev",
 			},
 		},
 		Commands:  nil,
