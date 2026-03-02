@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -135,17 +134,6 @@ func getCredentials(credentialsFile string) {
 			os.Exit(2)
 		}
 	}
-}
-
-// trace prints out information about the current function called
-func trace() string {
-	pc, file, line, ok := runtime.Caller(1)
-	if !ok {
-		return "TRACE ERROR"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	return fmt.Sprintf("File: %s Line: %d Function: %s", file, line, fn.Name())
 }
 
 func main() {
@@ -334,11 +322,11 @@ func main() {
 func workHorse(companyIDs string, searchString string) {
 
 	// refresh token if only tokenGraceSeconds are left before it expires
-	if token.Access == "" || int(time.Now().Sub(token.RefreshTime).Seconds()) > token.ExpiresIn-tokenGraceSeconds {
+	if token.Access == "" || int(time.Since(token.RefreshTime).Seconds()) > token.ExpiresIn-tokenGraceSeconds {
 		level.Debug(lg).Log("msg", "refreshing token")
 		initToken()
 	} else {
-		level.Debug(lg).Log("msg", fmt.Sprintf("Seconds before a new token must be fetched: %d", (token.ExpiresIn-tokenGraceSeconds)-int(time.Now().Sub(token.RefreshTime).Seconds())))
+		level.Debug(lg).Log("msg", fmt.Sprintf("Seconds before a new token must be fetched: %d", (token.ExpiresIn-tokenGraceSeconds)-int(time.Since(token.RefreshTime).Seconds())))
 	}
 
 	getMetrics(companyIDs, searchString)
@@ -383,25 +371,25 @@ func initToken() {
 	// create the token refresh request
 	url := baseURL + "/tokens?grant_type=client_credentials"
 	req, err := http.NewRequest("POST", url, nil)
-	req.SetBasicAuth(credentials.UserName, credentials.Password)
 	if err != nil {
-		// return if we weren't successful - we have tokenGraceSeconds to retry
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't apply Basic Auth: %s", err.Error()))
+		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't create token request: %s", err.Error()))
 		return
 	}
+	req.SetBasicAuth(credentials.UserName, credentials.Password)
 	// send the token refresh request
 	res, err := httpClient.Do(req)
 	if err != nil {
 		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get token: %s", err.Error()))
 		return
 	}
+	defer res.Body.Close()
+
 	if res.StatusCode != 200 {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
 		body, _ := io.ReadAll(res.Body)
 		level.Warn(lg).Log("msg", fmt.Sprintf("Error response code: %d - %s", res.StatusCode, body))
 		return
 	}
-	defer res.Body.Close()
 
 	// read body from response
 	body, err := io.ReadAll(res.Body)
@@ -431,31 +419,32 @@ func getMetrics(companyIDs string, searchString string) {
 	var url string
 	if searchString == "" {
 		// create the metrics fetching request
-		url = baseURL + "/companies?fields=" + strings.Join(fieldsToReturn[:], "%2C") + "&ids=" + strings.ReplaceAll(companyIDs, ",", "%2C")
+		url = baseURL + "/companies?fields=" + strings.Join(fieldsToReturn, "%2C") + "&ids=" + strings.ReplaceAll(companyIDs, ",", "%2C")
 	} else {
-		url = baseURL + "/companies/search?name=" + searchString + "&fields=" + strings.Join(fieldsToReturnSearch[:], "%2C")
+		url = baseURL + "/companies/search?name=" + searchString + "&fields=" + strings.Join(fieldsToReturnSearch, "%2C")
 	}
 	// curl --request GET -H "Authorization: Bearer $TOKEN" --url 'https://downdetectorapi.com/v2/companies/search?name=mail.com&fields=url%2Cbaseline%2Csite_id%2Cstatus%2Ccountry_iso%2Cname%2Cslug' | jq .
 
 	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", "Bearer "+token.Access)
 	if err != nil {
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't apply authorization header: %s", err.Error()))
+		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't create metrics request: %s", err.Error()))
 		return
 	}
+	req.Header.Add("Authorization", "Bearer "+token.Access)
 	// send the metrics request
 	res, err := httpClient.Do(req)
 	if err != nil {
 		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get metrics: %s", err.Error()))
 		return
 	}
+	defer res.Body.Close()
+
 	if res.StatusCode != 200 {
 		// return if we weren't successful
 		body, _ := io.ReadAll(res.Body)
 		level.Warn(lg).Log("msg", fmt.Sprintf("Could not get metrics: %d - %s", res.StatusCode, body))
 		return
 	}
-	defer res.Body.Close()
 
 	// read body from response
 	body, err := io.ReadAll(res.Body)
@@ -493,15 +482,15 @@ func getMetrics(companyIDs string, searchString string) {
 			companySet.Stats15 = companySet.IgnoreStats24[len(companySet.IgnoreStats24)-1]
 
 			// Debugging output
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
-			level.Debug(lg).Log("msg", fmt.Sprintf("===== Labels ====="))
+			level.Debug(lg).Log("msg", "")
+			level.Debug(lg).Log("msg", "===== Labels =====")
 			level.Debug(lg).Log("msg", fmt.Sprintf("Name:             %s", companySet.LabelName))
 			level.Debug(lg).Log("msg", fmt.Sprintf("Slug:             %s", companySet.LabelSlug))
 			level.Debug(lg).Log("msg", fmt.Sprintf("Country:          %s", companySet.LabelCountryISO))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Name:             %d", companySet.LabelID))
-			level.Debug(lg).Log("msg", fmt.Sprintf("===== Info ====="))
+			level.Debug(lg).Log("msg", fmt.Sprintf("ID:               %d", companySet.LabelID))
+			level.Debug(lg).Log("msg", "===== Info =====")
 			level.Debug(lg).Log("msg", fmt.Sprintf("Status:           %s", companySet.IgnoreStatus))
-			level.Debug(lg).Log("msg", fmt.Sprintf("===== Metrics ====="))
+			level.Debug(lg).Log("msg", "===== Metrics =====")
 			level.Debug(lg).Log("msg", fmt.Sprintf("Current Baseline: %d", companySet.BaselineCurrent))
 			level.Debug(lg).Log("msg", fmt.Sprintf("Stats60:          %d", companySet.Stats60))
 			level.Debug(lg).Log("msg", fmt.Sprintf("Stats15:          %d", companySet.Stats15))
@@ -517,8 +506,8 @@ func getMetrics(companyIDs string, searchString string) {
 			typeOfCompanySet := cs.Type()
 
 			// Loop over all struct members and collect all fields starting with Label in array of labels
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Looping over CompanySet"))
+			level.Debug(lg).Log("msg", "")
+			level.Debug(lg).Log("msg", "Looping over CompanySet")
 
 			for i := 0; i < cs.NumField(); i++ {
 				key := typeOfCompanySet.Field(i).Name
@@ -537,12 +526,12 @@ func getMetrics(companyIDs string, searchString string) {
 					labelValues = append(labelValues, labelValue)
 				}
 			}
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
+			level.Debug(lg).Log("msg", "")
 			level.Debug(lg).Log("msg", fmt.Sprintf("Labels: %v", labels))
 
 			// Loop over all struct fields and set Exporter to value with list of labels if they don't
 			// start with Label or Ignore
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
+			level.Debug(lg).Log("msg", "")
 			for i := 0; i < cs.NumField(); i++ {
 				key := typeOfCompanySet.Field(i).Name
 				if !(strings.HasPrefix(key, "Label") || strings.HasPrefix(key, "Ignore")) {
@@ -555,6 +544,9 @@ func getMetrics(companyIDs string, searchString string) {
 	if searchString != "" {
 		os.Exit(2)
 	}
+
+	// Update lastUpdate once per cycle
+	lastUpdate.WithLabelValues("global").Set(float64(time.Now().Unix()))
 }
 
 func setPrometheusMetric(key string, value int, labels []string, labelValues []string) {
@@ -574,12 +566,6 @@ func setPrometheusMetric(key string, value int, labels []string, labelValues []s
 
 	// Now set the value
 	exposed[key].WithLabelValues(labelValues...).Set(float64(value))
-
-	// Update lastUpdate so we immediately see when no updates happen anymore
-	now := time.Now()
-	seconds := now.Unix()
-	lastUpdate.WithLabelValues("global").Set(float64(seconds))
-
 }
 
 func systemAlive(listenAddress string, metricsPath string) {
@@ -596,14 +582,14 @@ func systemAlive(listenAddress string, metricsPath string) {
 
 	// Call the metrics URL...
 	res, err := http.Get(metricsURL)
-	if err == nil {
-		// ... and notify systemd that everything was ok
-		daemon.SdNotify(false, daemon.SdNotifyWatchdog)
-	} else {
+	if err != nil {
 		// ... do nothing if it was not ok, but log. Systemd will restart soon.
 		level.Warn(lg).Log("msg", fmt.Sprintf("liveness check failed: %s", err.Error()))
+		return
 	}
+	defer res.Body.Close()
 	// Read all away or else we'll run out of sockets sooner or later
 	_, _ = io.ReadAll(res.Body)
-	defer res.Body.Close()
+	// ... and notify systemd that everything was ok
+	daemon.SdNotify(false, daemon.SdNotifyWatchdog)
 }
