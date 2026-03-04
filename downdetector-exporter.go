@@ -383,12 +383,11 @@ func initToken() {
 	// create the token refresh request
 	url := baseURL + "/tokens?grant_type=client_credentials"
 	req, err := http.NewRequest("POST", url, nil)
-	req.SetBasicAuth(credentials.UserName, credentials.Password)
 	if err != nil {
-		// return if we weren't successful - we have tokenGraceSeconds to retry
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't apply Basic Auth: %s", err.Error()))
+		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't create token request: %s", err.Error()))
 		return
 	}
+	req.SetBasicAuth(credentials.UserName, credentials.Password)
 	// send the token refresh request
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -438,11 +437,11 @@ func getMetrics(companyIDs string, searchString string) {
 	// curl --request GET -H "Authorization: Bearer $TOKEN" --url 'https://downdetectorapi.com/v2/companies/search?name=mail.com&fields=url%2Cbaseline%2Csite_id%2Cstatus%2Ccountry_iso%2Cname%2Cslug' | jq .
 
 	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", "Bearer "+token.Access)
 	if err != nil {
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't apply authorization header: %s", err.Error()))
+		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't create metrics request: %s", err.Error()))
 		return
 	}
+	req.Header.Add("Authorization", "Bearer "+token.Access)
 	// send the metrics request
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -596,14 +595,13 @@ func systemAlive(listenAddress string, metricsPath string) {
 
 	// Call the metrics URL...
 	res, err := http.Get(metricsURL)
-	if err == nil {
-		// ... and notify systemd that everything was ok
-		daemon.SdNotify(false, daemon.SdNotifyWatchdog)
-	} else {
-		// ... do nothing if it was not ok, but log. Systemd will restart soon.
+	if err != nil {
 		level.Warn(lg).Log("msg", fmt.Sprintf("liveness check failed: %s", err.Error()))
+		return
 	}
+	defer res.Body.Close()
 	// Read all away or else we'll run out of sockets sooner or later
 	_, _ = io.ReadAll(res.Body)
-	defer res.Body.Close()
+	// ... and notify systemd that everything was ok
+	daemon.SdNotify(false, daemon.SdNotifyWatchdog)
 }
