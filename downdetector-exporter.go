@@ -395,13 +395,14 @@ func initToken() {
 		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get token: %s", err.Error()))
 		return
 	}
+	defer res.Body.Close()
+
 	if res.StatusCode != 200 {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
 		body, _ := io.ReadAll(res.Body)
 		level.Warn(lg).Log("msg", fmt.Sprintf("Error response code: %d - %s", res.StatusCode, body))
 		return
 	}
-	defer res.Body.Close()
 
 	// read body from response
 	body, err := io.ReadAll(res.Body)
@@ -449,13 +450,14 @@ func getMetrics(companyIDs string, searchString string) {
 		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get metrics: %s", err.Error()))
 		return
 	}
+	defer res.Body.Close()
+
 	if res.StatusCode != 200 {
 		// return if we weren't successful
 		body, _ := io.ReadAll(res.Body)
 		level.Warn(lg).Log("msg", fmt.Sprintf("Could not get metrics: %d - %s", res.StatusCode, body))
 		return
 	}
-	defer res.Body.Close()
 
 	// read body from response
 	body, err := io.ReadAll(res.Body)
