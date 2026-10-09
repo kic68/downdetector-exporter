@@ -1,3 +1,4 @@
+// downdetector-exporter is a Prometheus exporter for Downdetector metrics.
 package main
 
 import (
@@ -10,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -27,19 +27,19 @@ import (
 )
 
 const (
-	// a token can live at most 3600 seconds before it needs to be refreshed
+	// a token can live at most 3600 seconds before it needs to be refreshed.
 	tokenGraceSeconds = 300 // Seconds before token EOL when a new token must be fetched
-	// seconds before next loop is started
+	// seconds before next loop is started.
 	minSleepSeconds = 60
 	baseURL         = "https://downdetectorapi.com/v2"
 )
 
 var (
-	// version is set via ldflags during build
+	// version is set via ldflags during build.
 	version = "dev"
 	lg      = log.NewLogfmtLogger(os.Stdout)
 
-	// fields for metrics request. If expanded, struct CompanySet needs to be expanded accordingly
+	// fields for metrics request. If expanded, struct CompanySet needs to be expanded accordingly.
 	fieldsToReturn       = []string{"id", "name", "slug", "baseline_current", "country_iso", "stats_24", "stats_60", "status"}
 	fieldsToReturnSearch = []string{"id", "name", "slug", "country_iso"}
 
@@ -50,12 +50,12 @@ var (
 
 	httpClient *http.Client
 
-	// Downdetector delivers one CompanySet per given ID
+	// Downdetector delivers one CompanySet per given ID.
 	metricsResponse []CompanySet
 
-	// exposed holds the various metrics that are collected
+	// exposed holds the various metrics that are collected.
 	exposed = map[string]*prometheus.GaugeVec{}
-	// show last update time to see if system is working correctly
+	// show last update time to see if system is working correctly.
 	lastUpdate = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "dd_lastUpdate",
 		Help: "Last update timestamp in epoch seconds",
@@ -69,13 +69,13 @@ func init() {
 	prometheus.MustRegister(lastUpdate)
 }
 
-// BasicAuth contains username and string after reading them in from Yaml file
+// BasicAuth contains username and string after reading them in from Yaml file.
 type BasicAuth struct {
 	UserName string `json:"username"`
 	Password string `json:"password"`
 }
 
-// Token contains token, expiration at issuing time, type and, later, the time of issuing
+// Token contains token, expiration at issuing time, type and, later, the time of issuing.
 type Token struct {
 	// Access containing access token (type Bearer normally)
 	Access string `json:"access_token"`
@@ -90,7 +90,7 @@ type Token struct {
 // CompanySet contains returned data per Company
 // CompanySet Prefix field with Label if value is to be used as label
 // CompanySet Prefix field with Ignore if value is neither a metric nor a label but you want to handle it programmatically
-// CompanySet Fields without Prefix will be used as metrics value
+// CompanySet Fields without Prefix will be used as metrics value.
 type CompanySet struct {
 	LabelCountryISO string `json:"country_iso,omitempty"`
 	LabelName       string `json:"name,omitempty"`
@@ -111,7 +111,6 @@ type CompanySet struct {
 }
 
 func getCredentials(credentialsFile string) {
-
 	// given username and password takes precedence over credentialsFile
 	if username != "" && password != "" {
 		credentials.UserName = username
@@ -120,36 +119,21 @@ func getCredentials(credentialsFile string) {
 		osFile, err := os.Open(credentialsFile)
 		if err != nil {
 			// return if we weren't successful - we have tokenGraceSeconds to retry
-			level.Error(lg).Log("msg", fmt.Sprintf("Couldn't read credentials file: %s", err.Error()))
+			_ = level.Error(lg).Log("msg", "Couldn't read credentials file: "+err.Error())
 			os.Exit(2)
 		}
-		//fmt.Println(dat)
+		// fmt.Println(dat)
 		err = yaml.NewDecoder(osFile).Decode(&credentials)
 		if err != nil || credentials.Password == "" || credentials.UserName == "" {
 			errorText := "Username/Password not set"
-			if err != nil {
-				//errorText = err.Error()
-			}
-			level.Error(lg).Log("msg", fmt.Sprintf("Couldn't parse credentials file: %s", errorText))
-			level.Error(lg).Log("msg", fmt.Sprintf("YAML file needs to contain userName and password fields"))
+			_ = level.Error(lg).Log("msg", "Couldn't parse credentials file: "+errorText)
+			_ = level.Error(lg).Log("msg", "YAML file needs to contain userName and password fields")
 			os.Exit(2)
 		}
 	}
 }
 
-// trace prints out information about the current function called
-func trace() string {
-	pc, file, line, ok := runtime.Caller(1)
-	if !ok {
-		return "TRACE ERROR"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	return fmt.Sprintf("File: %s Line: %d Function: %s", file, line, fn.Name())
-}
-
 func main() {
-
 	// Destination variables of command line parser
 	var listenAddress string
 	var credentialsFile string
@@ -242,17 +226,16 @@ func main() {
 			},
 		},
 		Action: func(context.Context, *cli.Command) error {
-
 			if credentialsFile == "" {
 				if username == "" || password == "" {
-					level.Error(lg).Log("msg", "Either credentials_file or username and password need to be set!")
+					_ = level.Error(lg).Log("msg", "Either credentials_file or username and password need to be set!")
 
 					os.Exit(2)
 				}
 			}
 
 			if companyIDs == "" && searchString == "" {
-				level.Error(lg).Log("msg", "Either company_ids or a search string need to be set!")
+				_ = level.Error(lg).Log("msg", "Either company_ids or a search string need to be set!")
 				os.Exit(2)
 			}
 
@@ -270,29 +253,31 @@ func main() {
 				lg = level.NewFilter(lg, level.AllowError())
 			}
 
-			level.Debug(lg).Log("msg", fmt.Sprintf("listenAddress: %s", listenAddress))
-			level.Debug(lg).Log("msg", fmt.Sprintf("credentialsFile: %s", credentialsFile))
-			level.Debug(lg).Log("msg", fmt.Sprintf("metricsPath: %s", metricsPath))
-			level.Debug(lg).Log("msg", fmt.Sprintf("companyIDs: %v", companyIDs))
+			_ = level.Debug(lg).Log("msg", "listenAddress: "+listenAddress)
+			_ = level.Debug(lg).Log("msg", "credentialsFile: "+credentialsFile)
+			_ = level.Debug(lg).Log("msg", "metricsPath: "+metricsPath)
+			_ = level.Debug(lg).Log("msg", fmt.Sprintf("companyIDs: %v", companyIDs))
 
 			// install promhttp handler for metricsPath (/metrics)
 			http.Handle(metricsPath, promhttp.Handler())
 
 			// show nice web page if called without metricsPath
-			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte(`<html>
+			http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+				if _, err := w.Write([]byte(`<html>
 					<head><title>Downdetector Exporter</title></head>
 					<body>
 					<h1>Downdetector Exporter</h1>
 					<p><a href='` + metricsPath + `'>Metrics</a></p>
 					</body>
-					</html>`))
+					</html>`)); err != nil {
+					_ = level.Warn(lg).Log("msg", "couldn't write response: "+err.Error())
+				}
 			})
 
 			// Start the http server in background, but catch error
 			go func() {
 				err := http.ListenAndServe(listenAddress, nil)
-				level.Error(lg).Log("msg", err.Error())
+				_ = level.Error(lg).Log("msg", err.Error())
 				os.Exit(2)
 			}()
 
@@ -300,7 +285,9 @@ func main() {
 			time.Sleep(time.Second * 3)
 
 			// notify systemd that we're ready
-			daemon.SdNotify(false, daemon.SdNotifyReady)
+			if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
+				_ = level.Warn(lg).Log("msg", "systemd notify failed: "+err.Error())
+			}
 
 			// read in credentials from Yaml file or username/password variables
 			getCredentials(credentialsFile)
@@ -310,7 +297,6 @@ func main() {
 
 			// Working loop
 			for {
-
 				// does the individual work, so the rest of the code can be used for other exporters
 				workHorse(companyIDs, searchString)
 
@@ -319,7 +305,6 @@ func main() {
 
 				// sleep minSleepSeconds seconds before starting next loop
 				time.Sleep(time.Second * minSleepSeconds)
-
 			}
 		},
 	}
@@ -327,25 +312,25 @@ func main() {
 	// Start the app
 	err := app.Run(context.Background(), os.Args)
 	if err != nil {
-		level.Error(lg).Log("msg", err.Error())
+		_ = level.Error(lg).Log("msg", err.Error())
 	}
 }
 
 func workHorse(companyIDs string, searchString string) {
-
 	// refresh token if only tokenGraceSeconds are left before it expires
-	if token.Access == "" || int(time.Now().Sub(token.RefreshTime).Seconds()) > token.ExpiresIn-tokenGraceSeconds {
-		level.Debug(lg).Log("msg", "refreshing token")
+	if token.Access == "" || int(time.Since(token.RefreshTime).Seconds()) > token.ExpiresIn-tokenGraceSeconds {
+		_ = level.Debug(lg).Log("msg", "refreshing token")
 		initToken()
 	} else {
-		level.Debug(lg).Log("msg", fmt.Sprintf("Seconds before a new token must be fetched: %d", (token.ExpiresIn-tokenGraceSeconds)-int(time.Now().Sub(token.RefreshTime).Seconds())))
+		_ = level.Debug(lg).Log("msg", fmt.Sprintf("Seconds before a new token must be fetched: %d", (token.ExpiresIn-tokenGraceSeconds)-int(time.Since(token.RefreshTime).Seconds())))
 	}
 
-	getMetrics(companyIDs, searchString)
+	if getMetrics(companyIDs, searchString) {
+		os.Exit(2)
+	}
 }
 
 func getHTTPClient(proxyURLStr string) *http.Client {
-
 	var (
 		httpRequestsTotal = prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -362,7 +347,7 @@ func getHTTPClient(proxyURLStr string) *http.Client {
 	if proxyURLStr != "" {
 		proxyURL, err := url.Parse(proxyURLStr)
 		if err != nil {
-			level.Error(lg).Log("msg", fmt.Sprintf("Couldn't parse proxy url: %s", err.Error()))
+			_ = level.Error(lg).Log("msg", "Couldn't parse proxy url: "+err.Error())
 			os.Exit(2)
 		}
 		transport.Proxy = http.ProxyURL(proxyURL)
@@ -370,7 +355,7 @@ func getHTTPClient(proxyURLStr string) *http.Client {
 
 	roundTripper := promhttp.InstrumentRoundTripperCounter(httpRequestsTotal, transport)
 
-	//adding the Transport object to the http Client
+	// adding the Transport object to the http Client
 	client := &http.Client{
 		Transport: roundTripper,
 		Timeout:   60 * time.Second,
@@ -379,102 +364,99 @@ func getHTTPClient(proxyURLStr string) *http.Client {
 }
 
 func initToken() {
-
 	// create the token refresh request
 	url := baseURL + "/tokens?grant_type=client_credentials"
-	req, err := http.NewRequest("POST", url, nil)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
 	req.SetBasicAuth(credentials.UserName, credentials.Password)
 	if err != nil {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't apply Basic Auth: %s", err.Error()))
+		_ = level.Warn(lg).Log("msg", "Couldn't apply Basic Auth: "+err.Error())
 		return
 	}
 	// send the token refresh request
 	res, err := httpClient.Do(req)
 	if err != nil {
-		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get token: %s", err.Error()))
+		_ = level.Error(lg).Log("msg", "Couldn't get token: "+err.Error())
 		return
 	}
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
 		body, _ := io.ReadAll(res.Body)
-		level.Warn(lg).Log("msg", fmt.Sprintf("Error response code: %d - %s", res.StatusCode, body))
+		_ = level.Warn(lg).Log("msg", fmt.Sprintf("Error response code: %d - %s", res.StatusCode, body))
 		return
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	// read body from response
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't read in body: %s", err.Error()))
+		_ = level.Warn(lg).Log("msg", "Couldn't read in body: "+err.Error())
 		return
 	}
 
 	// unmarshal body content into token struct
 	err = json.Unmarshal(body, &token)
 	if err != nil {
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't unmarshal json: %s", err.Error()))
+		_ = level.Warn(lg).Log("msg", "Couldn't unmarshal json: "+err.Error())
 		return
 	}
 
 	// Mark we have refreshed token right now
 	token.RefreshTime = time.Now()
-	level.Debug(lg).Log("msg", fmt.Sprintf("Token Type: %s", token.Type))
-	level.Debug(lg).Log("msg", fmt.Sprintf("Expires in: %d", token.ExpiresIn))
-	level.Debug(lg).Log("msg", fmt.Sprintf("Token Refresh Time: %s", token.RefreshTime))
-
+	_ = level.Debug(lg).Log("msg", "Token Type: "+token.Type)
+	_ = level.Debug(lg).Log("msg", fmt.Sprintf("Expires in: %d", token.ExpiresIn))
+	_ = level.Debug(lg).Log("msg", fmt.Sprintf("Token Refresh Time: %s", token.RefreshTime))
 }
 
-func getMetrics(companyIDs string, searchString string) {
-
+// getMetrics fetches metrics or search results and reports whether the caller should exit afterwards.
+func getMetrics(companyIDs string, searchString string) bool {
 	var url string
 	if searchString == "" {
 		// create the metrics fetching request
-		url = baseURL + "/companies?fields=" + strings.Join(fieldsToReturn[:], "%2C") + "&ids=" + strings.ReplaceAll(companyIDs, ",", "%2C")
+		url = baseURL + "/companies?fields=" + strings.Join(fieldsToReturn, "%2C") + "&ids=" + strings.ReplaceAll(companyIDs, ",", "%2C")
 	} else {
-		url = baseURL + "/companies/search?name=" + searchString + "&fields=" + strings.Join(fieldsToReturnSearch[:], "%2C")
+		url = baseURL + "/companies/search?name=" + searchString + "&fields=" + strings.Join(fieldsToReturnSearch, "%2C")
 	}
 	// curl --request GET -H "Authorization: Bearer $TOKEN" --url 'https://downdetectorapi.com/v2/companies/search?name=mail.com&fields=url%2Cbaseline%2Csite_id%2Cstatus%2Ccountry_iso%2Cname%2Cslug' | jq .
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	req.Header.Add("Authorization", "Bearer "+token.Access)
 	if err != nil {
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't apply authorization header: %s", err.Error()))
-		return
+		_ = level.Warn(lg).Log("msg", "Couldn't apply authorization header: "+err.Error())
+		return false
 	}
 	// send the metrics request
 	res, err := httpClient.Do(req)
 	if err != nil {
-		level.Error(lg).Log("msg", fmt.Sprintf("Couldn't get metrics: %s", err.Error()))
-		return
+		_ = level.Error(lg).Log("msg", "Couldn't get metrics: "+err.Error())
+		return false
 	}
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		// return if we weren't successful
 		body, _ := io.ReadAll(res.Body)
-		level.Warn(lg).Log("msg", fmt.Sprintf("Could not get metrics: %d - %s", res.StatusCode, body))
-		return
+		_ = level.Warn(lg).Log("msg", fmt.Sprintf("Could not get metrics: %d - %s", res.StatusCode, body))
+		return false
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	// read body from response
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		// return if we weren't successful - we have tokenGraceSeconds to retry
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't read in body: %s", err.Error()))
-		return
+		_ = level.Warn(lg).Log("msg", "Couldn't read in body: "+err.Error())
+		return false
 	}
 
 	// unmarshal body content into metricResponse struct
 	err = json.Unmarshal(body, &metricsResponse)
 	if err != nil {
-		level.Warn(lg).Log("msg", fmt.Sprintf("Couldn't unmarshal json: %s", err.Error()))
-		return
+		_ = level.Warn(lg).Log("msg", "Couldn't unmarshal json: "+err.Error())
+		return false
 	}
 
 	// Loop through all companies in response
 	for _, companySet := range metricsResponse {
-
 		if searchString != "" {
 			fmt.Printf("ID: %d - Name: %s, Slug: %s, Country: %s\n", companySet.LabelID, companySet.LabelName, companySet.LabelSlug, companySet.LabelCountryISO)
 		} else {
@@ -493,19 +475,19 @@ func getMetrics(companyIDs string, searchString string) {
 			companySet.Stats15 = companySet.IgnoreStats24[len(companySet.IgnoreStats24)-1]
 
 			// Debugging output
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
-			level.Debug(lg).Log("msg", fmt.Sprintf("===== Labels ====="))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Name:             %s", companySet.LabelName))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Slug:             %s", companySet.LabelSlug))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Country:          %s", companySet.LabelCountryISO))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Name:             %d", companySet.LabelID))
-			level.Debug(lg).Log("msg", fmt.Sprintf("===== Info ====="))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Status:           %s", companySet.IgnoreStatus))
-			level.Debug(lg).Log("msg", fmt.Sprintf("===== Metrics ====="))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Current Baseline: %d", companySet.BaselineCurrent))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Stats60:          %d", companySet.Stats60))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Stats15:          %d", companySet.Stats15))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Status:           %d", companySet.NumStatus))
+			_ = level.Debug(lg).Log("msg", "")
+			_ = level.Debug(lg).Log("msg", "===== Labels =====")
+			_ = level.Debug(lg).Log("msg", "Name:             "+companySet.LabelName)
+			_ = level.Debug(lg).Log("msg", "Slug:             "+companySet.LabelSlug)
+			_ = level.Debug(lg).Log("msg", "Country:          "+companySet.LabelCountryISO)
+			_ = level.Debug(lg).Log("msg", fmt.Sprintf("Name:             %d", companySet.LabelID))
+			_ = level.Debug(lg).Log("msg", "===== Info =====")
+			_ = level.Debug(lg).Log("msg", "Status:           "+companySet.IgnoreStatus)
+			_ = level.Debug(lg).Log("msg", "===== Metrics =====")
+			_ = level.Debug(lg).Log("msg", fmt.Sprintf("Current Baseline: %d", companySet.BaselineCurrent))
+			_ = level.Debug(lg).Log("msg", fmt.Sprintf("Stats60:          %d", companySet.Stats60))
+			_ = level.Debug(lg).Log("msg", fmt.Sprintf("Stats15:          %d", companySet.Stats15))
+			_ = level.Debug(lg).Log("msg", fmt.Sprintf("Status:           %d", companySet.NumStatus))
 
 			// create empty array to hold labels
 			labels := make([]string, 0)
@@ -517,16 +499,16 @@ func getMetrics(companyIDs string, searchString string) {
 			typeOfCompanySet := cs.Type()
 
 			// Loop over all struct members and collect all fields starting with Label in array of labels
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Looping over CompanySet"))
+			_ = level.Debug(lg).Log("msg", "")
+			_ = level.Debug(lg).Log("msg", "Looping over CompanySet")
 
 			for i := 0; i < cs.NumField(); i++ {
 				key := typeOfCompanySet.Field(i).Name
 				value := cs.Field(i).Interface()
-				level.Debug(lg).Log("msg", fmt.Sprintf("Field: %s, Value: %v", key, value))
-				if strings.HasPrefix(key, "Label") {
+				_ = level.Debug(lg).Log("msg", fmt.Sprintf("Field: %s, Value: %v", key, value))
+				if after, ok := strings.CutPrefix(key, "Label"); ok {
 					// labels have lower case names
-					labels = append(labels, strings.ToLower(strings.TrimPrefix(key, "Label")))
+					labels = append(labels, strings.ToLower(after))
 					var labelValue string
 					// IDs are returned as integers, convert to string
 					if cs.Field(i).Type().Name() == "string" {
@@ -537,28 +519,26 @@ func getMetrics(companyIDs string, searchString string) {
 					labelValues = append(labelValues, labelValue)
 				}
 			}
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
-			level.Debug(lg).Log("msg", fmt.Sprintf("Labels: %v", labels))
+			_ = level.Debug(lg).Log("msg", "")
+			_ = level.Debug(lg).Log("msg", fmt.Sprintf("Labels: %v", labels))
 
 			// Loop over all struct fields and set Exporter to value with list of labels if they don't
 			// start with Label or Ignore
-			level.Debug(lg).Log("msg", fmt.Sprintf(""))
+			_ = level.Debug(lg).Log("msg", "")
 			for i := 0; i < cs.NumField(); i++ {
 				key := typeOfCompanySet.Field(i).Name
-				if !(strings.HasPrefix(key, "Label") || strings.HasPrefix(key, "Ignore")) {
+				if !strings.HasPrefix(key, "Label") && !strings.HasPrefix(key, "Ignore") {
 					value := cs.Field(i).Int()
 					setPrometheusMetric(key, int(value), labels, labelValues)
 				}
 			}
 		}
 	}
-	if searchString != "" {
-		os.Exit(2)
-	}
+	return searchString != ""
 }
 
 func setPrometheusMetric(key string, value int, labels []string, labelValues []string) {
-	level.Debug(lg).Log("msg", fmt.Sprintf("Key: %s, Value: %d, Labels: %v", key, value, labels))
+	_ = level.Debug(lg).Log("msg", fmt.Sprintf("Key: %s, Value: %d, Labels: %v", key, value, labels))
 	// Check if metric is already registered, if not, register it
 	_, ok := exposed[key]
 	if !ok {
@@ -579,11 +559,9 @@ func setPrometheusMetric(key string, value int, labels []string, labelValues []s
 	now := time.Now()
 	seconds := now.Unix()
 	lastUpdate.WithLabelValues("global").Set(float64(seconds))
-
 }
 
 func systemAlive(listenAddress string, metricsPath string) {
-
 	// systemd alive check
 	var metricsURL string
 	if !strings.HasPrefix(listenAddress, ":") {
@@ -596,14 +574,18 @@ func systemAlive(listenAddress string, metricsPath string) {
 
 	// Call the metrics URL...
 	res, err := http.Get(metricsURL)
-	if err == nil {
-		// ... and notify systemd that everything was ok
-		daemon.SdNotify(false, daemon.SdNotifyWatchdog)
-	} else {
+	if err != nil {
 		// ... do nothing if it was not ok, but log. Systemd will restart soon.
-		level.Warn(lg).Log("msg", fmt.Sprintf("liveness check failed: %s", err.Error()))
+		_ = level.Warn(lg).Log("msg", "liveness check failed: "+err.Error())
+		return
+	}
+	// ... and notify systemd that everything was ok
+	if _, err := daemon.SdNotify(false, daemon.SdNotifyWatchdog); err != nil {
+		_ = level.Warn(lg).Log("msg", "systemd notify failed: "+err.Error())
 	}
 	// Read all away or else we'll run out of sockets sooner or later
 	_, _ = io.ReadAll(res.Body)
-	defer res.Body.Close()
+	if err := res.Body.Close(); err != nil {
+		_ = level.Warn(lg).Log("msg", "couldn't close response body: "+err.Error())
+	}
 }
